@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>KakaoPay Homework</title>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+	</head>
+	<script type="text/javascript">
+		// 결제신청
+		function paymentCall(){
+			var req = new Object()
+			req.cardNum = $('#cardNum').val();
+			req.validTerm = $('#validTerm').val();
+			req.cvc = $('#cvc').val();
+			req.insMonth = $('#insMonth option:selected').val();
+			req.paymentMoney = $('#paymentMoney').val();
+			req.paymentStatus = 'PAYMENT';
+			var jsonData = JSON.stringify(req);
+			
+			console.log(jsonData.toString());
+
+			$.ajax({
+				type : "POST",
+				url : "/payment-info",
+				data : jsonData,
+				dataType : "JSON",
+				beforeSend : function(xhr){
+		            xhr.setRequestHeader("Accept", "application/json;charset=UTF-8");
+		            xhr.setRequestHeader("Content-type","application/json;charset=UTF-8");
+		        },
+				success : function(data) {
+					console.log(data);
+					$('#mgntId').val(data.mgntId);
+				},
+				error : function(xhr, status, error) {
+					var errCd = xhr.responseJSON.errCd;
+					var errMsg = xhr.responseJSON.errMsg;
+					alert("에러코드 : " + errCd + ", 에러메세지 : " + errMsg);
+				}
+			});
+		}
+		
+		// 결제 취소
+		function cancelPaymentCall(){
+			var req = new Object()
+			req.orgMgntId = $('#orgMgntId').val();
+			req.paymentMoney = $('#cancelMoney').val();
+			req.paymentStatus = 'CANCEL';
+			
+			var jsonData = JSON.stringify(req);
+			
+			$.ajax({
+				type : "POST",
+				url : "/cancel-payment",
+				data : jsonData,
+				dataType : "JSON",
+				beforeSend : function(xhr){
+		            xhr.setRequestHeader("Accept", "application/json;charset=UTF-8");
+		            xhr.setRequestHeader("Content-type","application/json;charset=UTF-8");
+		        },
+				success : function(data) {
+					console.log(data);
+					$('#cancelMgntId').val(data.mgntId);
+				},
+				error : function(xhr, status, error) {
+					var errCd = xhr.responseJSON.errCd;
+					var errMsg = xhr.responseJSON.errMsg;
+					alert("에러코드 : " + errCd + ", 에러메세지 : " + errMsg);
+				}
+			});
+		}
+		
+		// 조회
+		function inquiryPaymentCall(){
+			var req = new Object()
+			req.mgntId = $('#inquiryMgntId').val();
+			var jsonData = JSON.stringify(req);
+			
+			$.ajax({
+				type : "GET",
+				url : "/payment-info/"+req.mgntId,
+				beforeSend : function(xhr){
+		            xhr.setRequestHeader("Accept", "application/json;charset=UTF-8");
+		            xhr.setRequestHeader("Content-type","application/json;charset=UTF-8");
+		        },
+				success : function(data) {
+					console.log(data);
+					
+					$('#inquiryMgntId01').val(data.mgntId);
+					$('#inquiryCardNum').val(data.cardNum);
+					$('#inquiryValidTerm').val(data.validTerm);
+					$('#inquiryCvc').val(data.cvc);
+					$('#inquiryMoney').val(data.paymentMoney);
+					$('#inquiryAddValueTax').val(data.addValueTax);
+					$('#inquiryOrgMgntId').val(data.orgMgntId);
+				},
+				error : function(xhr, status, error) {
+					var errCd = xhr.responseJSON.errCd;
+					var errMsg = xhr.responseJSON.errMsg;
+					alert("에러코드 : " + errCd + ", 에러메세지 : " + errMsg);
+				}
+			});
+		}
+	</script>
+	<body>
+		
+			<div>
+			
+				<h2>1. 결제 API</h2>
+					<label for="cardNum">카드번호</label><br>
+					<input type="text" id="cardNum"  required><br>
+					
+					<label for="validTerm">유효기간</label><br>
+					<input type="text" id="validTerm"  required><br>
+					
+					<label for="cvc">CVC</label><br>
+					<input type="text" id="cvc"  required><br>
+					
+					<label for="insMonth">할부개월수</label><br>
+					<select id="insMonth" >
+						<option value="00">일시불</option>
+						<option value="01">1개월</option>
+						<option value="02">2개월</option>
+						<option value="03">3개월</option>
+						<option value="04">4개월</option>
+						<option value="05">5개월</option>
+						<option value="06">6개월</option>
+						<option value="07">7개월</option>
+						<option value="08">8개월</option>
+						<option value="09">9개월</option>
+						<option value="10">10개월</option>
+						<option value="11">11개월</option>
+						<option value="12">12개월</option>
+					</select><br>
+					
+					<label for="paymentMoney">결제금액</label><br>
+					<input type="text" id="paymentMoney"  required><br><br>
+					
+				<button onClick="paymentCall();">결제요청</button><br><br>
+				
+				<label for="mgntId">결제 요청된 관리번호</label><br>
+				<input type="text" id="mgntId" ><br>
+				
+			<h2 >2. 취소 API</h2>
+				<label for="orgMgntId">취소 하려는 결제건의 관리번호</label><br>
+				<input type="text" id="orgMgntId" ><br>
+				<label for="cancelMoney">취소금액</label><br>
+				<input type="text" id="cancelMoney"  required><br><br>
+				<button onClick="cancelPaymentCall();">결제취소</button><br>
+				
+				<label for="cancelMgntId">취소 요청 건의 관리번호</label><br>
+				<input type="text" id="cancelMgntId"  required><br><br>
+				
+			<h2 >3. 조회 API</h2>
+				<label for="inquiryMgntId">조회 요청 건의 관리번호</label><br>
+				<input type="text" id="inquiryMgntId"  required><br><br>
+				
+				<button onClick="inquiryPaymentCall();">조회</button><br>
+				
+				<label for="inquiryMgntId01">조회 요청 건의 관리번호</label><br>
+				<input type="text" id="inquiryMgntId01"  required><br><br>
+				
+				<label for="inquiryCardNum">카드번호</label><br>
+				<input type="text" id="inquiryCardNum"  required><br><br>
+				
+				<label for="inquiryValidTerm">유효기간</label><br>
+				<input type="text" id="inquiryValidTerm"  required><br><br>
+				
+				<label for="inquiryCvc">cvc</label><br>
+				<input type="text" id="inquiryCvc"  required><br><br>
+				
+				<label for="inquiryMoney">결제/취소금액</label><br>
+				<input type="text" id="inquiryMoney"  required><br><br>
+				
+				<label for="inquiryAddValueTax">부가세</label><br>
+				<input type="text" id="inquiryAddValueTax"  required><br><br>
+				
+				<label for="inquiryOrgMgntId">기존 결제 관리번호</label><br>
+				<input type="text" id="inquiryOrgMgntId"  required><br><br>
+				
+		</div>
+		
+	</body>
+</html>
